@@ -1,7 +1,7 @@
 name: dart_ncnn_yolov8
-description: "A plugin use ncnn drive yolov8."
+description: "A plugin use ncnn to drive yolov8."
 version: 0.0.1
-homepage:
+homepage: https://github.com/Sunhill666/dart_ncnn_yolov8
 
 environment:
   sdk: '>=3.3.4 <4.0.0'
