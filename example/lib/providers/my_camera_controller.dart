@@ -62,6 +62,20 @@ class MyCameraController {
       }
     }
   }
+
+  Future<CameraController> getCameraController() async {
+    if (_cameraController == null) {
+      final camera = (await availableCameras()).first;
+
+      _cameraController = CameraController(
+        camera,
+        ResolutionPreset.ultraHigh,
+        enableAudio: false,
+      );
+    }
+
+    return _cameraController!;
+  }
 }
 
 extension DeviceOrientationExtension on DeviceOrientation {

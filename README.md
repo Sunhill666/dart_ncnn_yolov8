@@ -1,6 +1,6 @@
 # dart_ncnn_yolov8
 
-A new Flutter FFI plugin project.
+A plugin use ncnn to drive yolov8.
 
 ## Getting Started
 
@@ -20,6 +20,41 @@ This template uses the following structure:
 
 * platform folders (`android`, `ios`, `windows`, etc.): Contains the build files
   for building and bundling the native code library with the platform application.
+
+## How to use
+
+For now, the example app only have Android app.
+
+### Get dependencies of plugin and example app
+
+```shell
+dart pub get
+```
+
+### Add NCNN & OpenCV-mobile library
+
+Take Android for example:
+
+1. Download [NCNN](https://github.com/Tencent/ncnn/releases) (download ncnn-xxxxxxx-android[-vulkan].zip).
+2. Download [opencv-mobile](https://github.com/nihui/opencv-mobile/releases) (download opencv-mobile-x.x.x-android.zip).
+3. Extract Zip file to `dart_ncnn_yolov8/android/src/main/cpp`.
+4. Change corresponding platform library path in `dart_ncnn_yolov8/src/CMakeLists.txt`.
+
+### Use ffigen to generate ffi bindings
+
+In project root folder:
+
+```shell
+dart run ffigen --config ffigen.yaml
+```
+
+### Use Freezed to generate code
+
+In project root folder:
+
+```shell
+dart run build_runner build
+```
 
 ## Building and bundling native code
 
@@ -90,3 +125,8 @@ For help getting started with Flutter, view our
 [online documentation](https://flutter.dev/docs), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
 
+## Reference
+
+* [FeiGeChuanShu/ncnn-android-yolov8](https://github.com/FeiGeChuanShu/ncnn-android-yolov8)
+* [KoheiKanagu/ncnn_yolox_flutter](https://github.com/KoheiKanagu/ncnn_yolox_flutter)
+* [Flutter ncnn 使用](https://zhuanlan.zhihu.com/p/644417537)

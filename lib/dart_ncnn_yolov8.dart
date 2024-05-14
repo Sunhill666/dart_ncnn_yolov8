@@ -95,7 +95,7 @@ class DartNcnnYolo {
       tempModelPath as Pointer<Char>,
       tempParamPath as Pointer<Char>,
       targetSize,
-      0,
+      1,
     );
     
     calloc

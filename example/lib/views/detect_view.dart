@@ -23,7 +23,7 @@ class DetectView extends HookConsumerWidget {
                 context,
                 MaterialPageRoute(
                   builder: (context) =>
-                    const CameraPage(detection: true),
+                    const CameraPage(),
                 ),
               );
             },

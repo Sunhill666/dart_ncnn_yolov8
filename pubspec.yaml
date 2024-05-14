@@ -1,5 +1,5 @@
 name: dart_ncnn_yolov8
-description: "A new Flutter FFI plugin project."
+description: "A plugin use ncnn drive yolov8."
 version: 0.0.1
 homepage:
 

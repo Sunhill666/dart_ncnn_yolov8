@@ -9,10 +9,6 @@
 #include "cpu.h"
 #include "net.h"
 
-ncnn::Net yolo;
-ncnn::UnlockedPoolAllocator blob_pool_allocator;
-ncnn::PoolAllocator workspace_pool_allocator;
-
 struct Object {
     int label;
     float prob;
@@ -23,6 +19,24 @@ struct GridAndStride {
     int grid0;
     int grid1;
     int stride;
+};
+
+class Yolo {
+  public:
+    Yolo();
+
+    bool load(const char *model_path, const char *param_path, int _target_size, bool use_gpu = false);
+
+    bool detect(const unsigned char *pixels, int type, int width, int height, std::vector<Object> &objects,
+                float prob_threshold = 0.6f, float nms_threshold = 0.5f);
+
+  private:
+    ncnn::Net yolo;
+    int target_size;
+    float mean_value[3];
+    float norm_value[3];
+    ncnn::UnlockedPoolAllocator blob_pool_allocator;
+    ncnn::PoolAllocator workspace_pool_allocator;
 };
 
 static float fast_exp(float x) {
@@ -209,11 +223,47 @@ static void generate_proposals(std::vector<GridAndStride> grid_strides, const nc
     }
 }
 
+Yolo::Yolo() {
+    blob_pool_allocator.set_size_compare_ratio(0.f);
+    workspace_pool_allocator.set_size_compare_ratio(0.f);
+}
 
-static bool detect(const unsigned char *pixels, int type, int width, int height, std::vector<Object> &objects,
-                   float prob_threshold, float nms_threshold, int target_size) {
-    const float mean_value[3] = {103.53f, 116.28f, 123.675f};
-    const float norm_value[3] = {1 / 255.f, 1 / 255.f, 1 / 255.f};
+bool Yolo::load(const char *model_path, const char *param_path, int _target_size, bool use_gpu) {
+    const float _mean_value[3] = {103.53f, 116.28f, 123.675f};
+    const float _norm_value[3] = {1 / 255.f, 1 / 255.f, 1 / 255.f};
+    yolo.clear();
+    blob_pool_allocator.clear();
+    workspace_pool_allocator.clear();
+
+    ncnn::set_cpu_powersave(2);
+    ncnn::set_omp_num_threads(ncnn::get_big_cpu_count());
+
+    yolo.opt = ncnn::Option();
+
+#if NCNN_VULKAN
+    yolo.opt.use_vulkan_compute = use_gpu;
+#endif
+
+    yolo.opt.num_threads = ncnn::get_big_cpu_count();
+    yolo.opt.blob_allocator = &blob_pool_allocator;
+    yolo.opt.workspace_allocator = &workspace_pool_allocator;
+
+    yolo.load_param(param_path);
+    yolo.load_model(model_path);
+
+    target_size = _target_size;
+    mean_value[0] = _mean_value[0];
+    mean_value[1] = _mean_value[1];
+    mean_value[2] = _mean_value[2];
+    norm_value[0] = _norm_value[0];
+    norm_value[1] = _norm_value[1];
+    norm_value[2] = _norm_value[2];
+
+    return 0;
+}
+
+bool Yolo::detect(const unsigned char *pixels, int type, int width, int height, std::vector<Object> &objects,
+                  float prob_threshold, float nms_threshold) {
     // pad to multiple of 32
     int w = width;
     int h = height;
@@ -292,19 +342,7 @@ static bool detect(const unsigned char *pixels, int type, int width, int height,
     } objects_area_greater;
     std::sort(objects.begin(), objects.end(), objects_area_greater);
 
-    return true;
-}
-
-static bool detect_yolo_cv_mat(const cv::Mat &bgr, float prob_threshold, float nms_threshold, int target_size,
-                                std::vector<Object> &objects) {
-    int img_w = bgr.cols;
-    int img_h = bgr.rows;
-    return detect(bgr.data, ncnn::Mat::PIXEL_BGR, img_w, img_h, objects, prob_threshold, nms_threshold, target_size);
-}
-
-static bool detect_yolo_pixels(const unsigned char *pixels, int pixelType, int width, int height, float prob_threshold,
-                                float nms_threshold, int target_size, std::vector<Object> &objects) {
-    return detect(pixels, pixelType, width, height, objects, prob_threshold, nms_threshold, target_size);
+    return 0;
 }
 
 char *parseResultsObjects(std::vector<Object> &objects) {
@@ -326,47 +364,63 @@ char *parseResultsObjects(std::vector<Object> &objects) {
     return result_c;
 }
 
+static Yolo *g_yolo = 0;
+static ncnn::Mutex lock;
+
 FFI_PLUGIN_EXPORT void yoloLoad(const char *model_path, const char *param_path, int target_size, int use_gpu) {
-    blob_pool_allocator.set_size_compare_ratio(0.f);
-    workspace_pool_allocator.set_size_compare_ratio(0.f);
+    {
+        ncnn::MutexLockGuard g(lock);
 
-    ncnn::set_cpu_powersave(2);
-    ncnn::set_omp_num_threads(ncnn::get_big_cpu_count());
-
-    yolo.opt = ncnn::Option();
-
-#if NCNN_VULKAN
-    yolo.opt.use_vulkan_compute = use_gpu;
-#endif
-
-    yolo.opt.num_threads = ncnn::get_big_cpu_count();
-    yolo.opt.blob_allocator = &blob_pool_allocator;
-    yolo.opt.workspace_allocator = &workspace_pool_allocator;
-
-    yolo.load_param(param_path);
-    yolo.load_model(model_path);
+        if (use_gpu && ncnn::get_gpu_count() == 0) {
+            // no gpu
+            delete g_yolo;
+            g_yolo = 0;
+        } else {
+            if (!g_yolo)
+                g_yolo = new Yolo;
+            g_yolo->load(model_path, param_path, target_size, use_gpu);
+        }
+    }
 }
 
 FFI_PLUGIN_EXPORT void yoloUnload() {
-    yolo.clear();
-    blob_pool_allocator.clear();
-    workspace_pool_allocator.clear();
+    {
+        ncnn::MutexLockGuard g(lock);
+
+        delete g_yolo;
+        g_yolo = 0;
+    }
 }
 
-FFI_PLUGIN_EXPORT char *detectWithImagePath(const char *image_path, float prob_threshold, float nms_threshold, int target_size) {
+FFI_PLUGIN_EXPORT char *detectWithImagePath(const char *image_path, float prob_threshold, float nms_threshold,
+                                            int target_size) {
     cv::Mat bgr = cv::imread(image_path, 1);
     if (bgr.empty()) {
         fprintf(stderr, "cv::imread %s failed\n", image_path);
     }
     std::vector<Object> objects;
-    detect_yolo_cv_mat(bgr, prob_threshold, nms_threshold, target_size, objects);
+    int img_w = bgr.cols;
+    int img_h = bgr.rows;
+    {
+        ncnn::MutexLockGuard g(lock);
+
+        if (g_yolo) {
+            g_yolo->detect(bgr.data, ncnn::Mat::PIXEL_BGR, img_w, img_h, objects, prob_threshold, nms_threshold);
+        }
+    }
     return parseResultsObjects(objects);
 }
 
 FFI_PLUGIN_EXPORT char *detectWithPixels(const unsigned char *pixels, int pixelType, int width, int height,
                                          float prob_threshold, float nms_threshold, int target_size) {
     std::vector<Object> objects;
-    detect_yolo_pixels(pixels, pixelType, width, height, prob_threshold, nms_threshold, target_size, objects);
+    {
+        ncnn::MutexLockGuard g(lock);
+
+        if (g_yolo) {
+            g_yolo->detect(pixels, pixelType, width, height, objects, prob_threshold, nms_threshold);
+        }
+    }
     return parseResultsObjects(objects);
 }
 
