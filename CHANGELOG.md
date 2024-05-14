@@ -8,4 +8,5 @@
 ## 0.0.2
 
 * Expose more parameters.
+* Withdraw some ignored file.
 * TODO: Add more example app.

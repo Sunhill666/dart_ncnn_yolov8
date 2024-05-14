@@ -30,7 +30,5 @@ build/
 
 .vscode/
 
-*.freezed.dart
-*_bindings_generated.dart
 **/ncnn
 **/opencv-mobile
