@@ -16,7 +16,7 @@ extern "C" {
 #endif
 
 // YOLO
-FFI_PLUGIN_EXPORT void yoloLoad(const char *model_path, const char *param_path, int target_size, int use_gpu);
+FFI_PLUGIN_EXPORT void yoloLoad(const char *model_path, const char *param_path, int target_size, int num_class, int use_gpu);
 
 FFI_PLUGIN_EXPORT void yoloUnload();
 

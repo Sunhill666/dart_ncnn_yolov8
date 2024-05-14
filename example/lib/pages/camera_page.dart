@@ -2,9 +2,9 @@ import 'package:dart_ncnn_yolov8/dart_ncnn_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import '../main.dart';
 import '../providers/my_camera_controller.dart';
 import '../providers/ncnn_yolo_controller.dart';
+import '../providers/ncnn_yolo_options.dart';
 
 // A screen that allows users to take a picture using a given camera.
 class CameraPage extends HookConsumerWidget {
@@ -88,7 +88,7 @@ class CameraPage extends HookConsumerWidget {
                       painter: YoloResultPainter(
                         image: previewImage,
                         results: ref.watch(ncnnYoloController),
-                        labels: cocoLabels,
+                        labels: labels,
                       ),
                     ),
                   ),

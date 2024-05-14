@@ -25,13 +25,14 @@ class Yolo {
   public:
     Yolo();
 
-    bool load(const char *model_path, const char *param_path, int _target_size, bool use_gpu = false);
+    bool load(const char *model_path, const char *param_path, int _target_size, int _num_class, bool use_gpu = false);
 
     bool detect(const unsigned char *pixels, int type, int width, int height, std::vector<Object> &objects,
                 float prob_threshold = 0.6f, float nms_threshold = 0.5f);
 
   private:
     ncnn::Net yolo;
+    int num_class;
     int target_size;
     float mean_value[3];
     float norm_value[3];
@@ -148,10 +149,9 @@ static void generate_grids_and_stride(const int target_w, const int target_h, st
     }
 }
 
-static void generate_proposals(std::vector<GridAndStride> grid_strides, const ncnn::Mat &pred, float prob_threshold,
-                               std::vector<Object> &objects) {
+static void generate_proposals(std::vector<GridAndStride> grid_strides, const ncnn::Mat &pred, int num_class,
+                               float prob_threshold, std::vector<Object> &objects) {
     const int num_points = grid_strides.size();
-    const int num_class = 80;
     const int reg_max_1 = 16;
 
     for (int i = 0; i < num_points; i++) {
@@ -228,7 +228,7 @@ Yolo::Yolo() {
     workspace_pool_allocator.set_size_compare_ratio(0.f);
 }
 
-bool Yolo::load(const char *model_path, const char *param_path, int _target_size, bool use_gpu) {
+bool Yolo::load(const char *model_path, const char *param_path, int _target_size, int _num_class, bool use_gpu) {
     const float _mean_value[3] = {103.53f, 116.28f, 123.675f};
     const float _norm_value[3] = {1 / 255.f, 1 / 255.f, 1 / 255.f};
     yolo.clear();
@@ -251,6 +251,7 @@ bool Yolo::load(const char *model_path, const char *param_path, int _target_size
     yolo.load_param(param_path);
     yolo.load_model(model_path);
 
+    num_class = _num_class;
     target_size = _target_size;
     mean_value[0] = _mean_value[0];
     mean_value[1] = _mean_value[1];
@@ -301,7 +302,7 @@ bool Yolo::detect(const unsigned char *pixels, int type, int width, int height, 
     std::vector<int> strides = {8, 16, 32}; // might have stride=64
     std::vector<GridAndStride> grid_strides;
     generate_grids_and_stride(in_pad.w, in_pad.h, strides, grid_strides);
-    generate_proposals(grid_strides, out, prob_threshold, proposals);
+    generate_proposals(grid_strides, out, num_class, prob_threshold, proposals);
 
     // sort all proposals by score from highest to lowest
     qsort_descent_inplace(proposals);
@@ -367,7 +368,7 @@ char *parseResultsObjects(std::vector<Object> &objects) {
 static Yolo *g_yolo = 0;
 static ncnn::Mutex lock;
 
-FFI_PLUGIN_EXPORT void yoloLoad(const char *model_path, const char *param_path, int target_size, int use_gpu) {
+FFI_PLUGIN_EXPORT void yoloLoad(const char *model_path, const char *param_path, int target_size, int num_class, int use_gpu) {
     {
         ncnn::MutexLockGuard g(lock);
 
@@ -378,7 +379,7 @@ FFI_PLUGIN_EXPORT void yoloLoad(const char *model_path, const char *param_path, 
         } else {
             if (!g_yolo)
                 g_yolo = new Yolo;
-            g_yolo->load(model_path, param_path, target_size, use_gpu);
+            g_yolo->load(model_path, param_path, target_size, num_class, use_gpu);
         }
     }
 }

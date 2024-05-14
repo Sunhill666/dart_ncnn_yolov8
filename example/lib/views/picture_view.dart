@@ -2,9 +2,9 @@ import 'package:dart_ncnn_yolov8/dart_ncnn_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import '../main.dart';
 import '../providers/my_camera_controller.dart';
 import '../providers/ncnn_yolo_controller.dart';
+import '../providers/ncnn_yolo_options.dart';
 
 class DisplayPictureScreen extends HookConsumerWidget {
   const DisplayPictureScreen({super.key});
@@ -38,7 +38,7 @@ class DisplayPictureScreen extends HookConsumerWidget {
                 painter: YoloResultPainter(
                   image: previewImage,
                   results: ref.watch(ncnnYoloController),
-                  labels: cocoLabels,
+                  labels: labels,
                 ),
               ),
             )

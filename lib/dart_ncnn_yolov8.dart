@@ -22,6 +22,10 @@ const yoloNmsThresholdDefault = 0.5;
 
 const yoloTargetSizeDefault = 320;
 
+const yoloUseGPUDefault = true;
+
+const yoloNumClassDefault = 80;
+
 const String _libName = 'dart_ncnn_yolov8';
 
 class DartNcnnYolo {
@@ -59,6 +63,12 @@ class DartNcnnYolo {
   int _targetSize = yoloTargetSizeDefault;
   int get targetSize => _targetSize;
 
+  int _useGPU = yoloUseGPUDefault ? 1 : 0;
+  int get intUseGPU => _useGPU;
+
+  int _numClass = yoloNumClassDefault;
+  int get numClass => _numClass;
+
   /// Initialize YOLO
   /// Run it for the first time
   ///
@@ -75,6 +85,8 @@ class DartNcnnYolo {
     double probThreshold = yoloProbThresholdDefault,
     double nmsThreshold = yoloNmsThresholdDefault,
     int targetSize = yoloTargetSizeDefault,
+    int numClass = yoloNumClassDefault,
+    bool useGPU = yoloUseGPUDefault,
   }) async {
     assert(probThreshold > 0);
     assert(nmsThreshold > 0);
@@ -87,6 +99,8 @@ class DartNcnnYolo {
     _probThreshold = probThreshold;
     _nmsThreshold = nmsThreshold;
     _targetSize = targetSize;
+    _numClass = numClass;
+    _useGPU = useGPU ? 1 : 0;
 
     final tempModelPath = (await _copy(modelPath)).toNativeUtf8();
     final tempParamPath = (await _copy(paramPath)).toNativeUtf8();
@@ -95,7 +109,8 @@ class DartNcnnYolo {
       tempModelPath as Pointer<Char>,
       tempParamPath as Pointer<Char>,
       targetSize,
-      1,
+      numClass,
+      intUseGPU,
     );
     
     calloc
@@ -320,7 +335,7 @@ class DartNcnnYolo {
   /// Read the image from the file path and execute Detect.
   ///
   /// The [imagePath] should be the path to the image, such as "assets/image.jpg".
-  /// Returns the results of a YOLOX run as a List of [YoloResult].
+  /// Returns the results of a YOLO run as a List of [YoloResult].
   ///
   List<YoloResult> detectImageFile(
     String imagePath,

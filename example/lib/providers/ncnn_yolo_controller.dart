@@ -35,6 +35,8 @@ class NcnnYoloController extends StateNotifier<List<YoloResult>> {
       probThreshold: ref.read(ncnnYoloOptions).probThreshold,
       nmsThreshold: ref.read(ncnnYoloOptions).nmsThreshold,
       targetSize: ref.read(ncnnYoloOptions).targetSize,
+      numClass: ref.read(ncnnYoloOptions).numClass,
+      useGPU: ref.read(ncnnYoloOptions).useGPU,
     );
   }
 
