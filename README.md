@@ -29,6 +29,8 @@ For now, the example app only have Android app.
 
 ```shell
 dart pub get
+cd example
+flutter pub get
 ```
 
 ### Add NCNN & OpenCV-mobile library
@@ -40,7 +42,7 @@ Take Android for example:
 3. Extract Zip file to `dart_ncnn_yolov8/android/src/main/cpp`.
 4. Change corresponding platform library path in `dart_ncnn_yolov8/src/CMakeLists.txt`.
 
-### Use ffigen to generate ffi bindings
+### Use ffigen to generate ffi bindings (Optional)
 
 In project root folder:
 
@@ -48,7 +50,7 @@ In project root folder:
 dart run ffigen --config ffigen.yaml
 ```
 
-### Use Freezed to generate code
+### Use Freezed to generate code (Optional)
 
 In project root folder:
 

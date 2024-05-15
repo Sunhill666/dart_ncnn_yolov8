@@ -1,6 +1,6 @@
 name: dart_ncnn_yolov8
 description: "A plugin use ncnn to drive yolov8."
-version: 0.0.2
+version: 0.0.3
 homepage: https://github.com/Sunhill666/dart_ncnn_yolov8
 
 environment:

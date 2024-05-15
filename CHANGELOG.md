@@ -10,3 +10,8 @@
 * Expose more parameters.
 * Withdraw some ignored file.
 * TODO: Add more example app.
+
+## 0.0.3
+
+* Update dependency and  README.
+* TODO: Add more example app.
