@@ -33,6 +33,16 @@ cd example
 flutter pub get
 ```
 
+### Get NCNN Model
+
+Use [Ultralytics](https://docs.ultralytics.com/modes/export/) export NCNN model **without any modification for model structure**.
+
+```shell
+yolo export model=yolov8n format=ncnn
+```
+
+and put into `example\assets\yolo`, `example\lib\providers\ncnn_yolo_options.dart` used to custom yout own model.
+
 ### Add NCNN & OpenCV-mobile library
 
 Take Android for example:

@@ -19,6 +19,7 @@ class NcnnYoloOptions with _$NcnnYoloOptions {
 
 final ncnnYoloOptions = StateProvider(
   (ref) => const NcnnYoloOptions(
+    targetSize: 640,
     numClass: 80,
     useGPU: false,
   ),

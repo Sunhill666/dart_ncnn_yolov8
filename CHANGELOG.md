@@ -15,3 +15,8 @@
 
 * Update dependency and  README.
 * TODO: Add more example app.
+
+## 0.0.4
+
+* Can use the directly export ncnn model of ultralytics without any modification.
+* TODO: Add more example app.
